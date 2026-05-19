@@ -1,9 +1,9 @@
 const bycript = require('bcryptjs');
 
-const hashPassword = async (password) => {
-    const salt = await bycript.genSalt(10);
-    const hashedPassword = await bycript.hash(password, salt);
-    console.log(hashedPassword);
-}
+const decriptedPassword = async (password, hashedPassword) => {
+    const isMatch = await bycript.compare(password, hashedPassword);
+    console.log(isMatch);
+    return isMatch;
+};
 
-module.exports = hashPassword;
+module.exports = decriptedPassword ;

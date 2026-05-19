@@ -19,8 +19,4 @@ app.use('/api/projects',projectModel)
 app.use('/api/profile',profileModel)
 app.use('/api/auth',authModel)
 
-app.get("/api/check", (req, res) => {
-  res.json({ message: "API working" });
-});
-
 module.exports = app;

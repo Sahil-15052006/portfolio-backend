@@ -6,18 +6,12 @@ const bycrpt = require('bcryptjs');
 
 const loginUser = async (req, res) => {
     const { name, password } = req.body;
-    console.log(user)
-            console.log(name);
-            console.log(password);
-            // console.log(user.password);
-            // console.log(passwordMatched);
     try{ 
-        
-        const user = await User.findOne({ name });
-
+        const stringifiedName = name.toString();
+        const stringifiedPassword = password.toString();
+        const user = await User.findOne({ name : stringifiedName });
         if (user){
-            const passwordMatched = await bycrpt.compare(password, user.password);
-            
+            const passwordMatched = await bycrpt.compare(stringifiedPassword, user.password);
             if(passwordMatched){
                 const token = jwt.sign(
                     { userId: user._id }, 
