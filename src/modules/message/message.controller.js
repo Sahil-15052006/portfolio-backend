@@ -7,6 +7,7 @@ const createMessage = async (req, res) => {
       name,
       email,
       message,
+      owner:req.user.userId
     });
     res.status(201).json(newMessage);
   } catch (error) {
@@ -16,7 +17,9 @@ const createMessage = async (req, res) => {
 
 const getMessages = async (req, res) => {
   try {
-    const messages = await Message.find().sort({ createdAt: -1 });
+    const messages = await Message.find({
+      owner:req.user.userId
+    }).sort({ createdAt: -1 });
     res.status(200).json(messages);
   } catch (error) {
     res
@@ -28,7 +31,10 @@ const getMessages = async (req, res) => {
 const deleteMessage = async (req, res) => {
   try {
     const { id } = req.params;
-    await Message.findByIdAndDelete(id);
+    await Message.findByIdAndDelete({
+      _id:id,
+      owner:req.user.userId
+    });
     res.status(200).json({ message: "Message Deleted" });
   } catch (error) {
     res

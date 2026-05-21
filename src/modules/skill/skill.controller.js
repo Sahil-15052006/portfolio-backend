@@ -5,7 +5,8 @@ const createSkill = async (req,res) => {
         const {name,type} = req.body
         const newSkill = await Skill.create({
             name,
-            type
+            type,
+            owner:req.user.userId
         })
         res.status(201).json(newSkill)
     } catch(error){
@@ -15,7 +16,9 @@ const createSkill = async (req,res) => {
 
 const getSkills = async (req,res) =>{
     try{
-        const skills = await Skill.find().sort({createdAt:-1})
+        const skills = await Skill.find({
+            owner:req.user.userId
+        }).sort({createdAt:-1})
         res.status(200).json(skills)
     }catch(error){
         res.status(500).json({message:"Server error : Failed to fetch messages"})
@@ -25,7 +28,10 @@ const getSkills = async (req,res) =>{
 const deleteSkill = async (req,res) => {
     try{
         const {id} = req.params
-        await Skill.findByIdAndDelete(id)
+        await Skill.findByIdAndDelete({
+            _id:id,
+            owner:req.user.userId
+        })
         res.status(200).json({message:"Skill deleted"})
     }catch(error){
         res.status(500).json({message:"Server error : Failed to delete message"})
@@ -38,7 +44,8 @@ const updateSkill = async (req,res) => {
         const updatedSkill = await Skill.findByIdAndUpdate(
             id,
             req.body,
-            {returnDocument:"after"},
+            {new:true},
+            owner:req.user.userId
         )
         res.status(200).json(updatedSkill,{message:"Skill updated"})
     }catch(error){

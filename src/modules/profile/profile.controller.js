@@ -1,10 +1,11 @@
-const { ReturnDocument } = require('mongodb')
 const Profile = require('./profile.model')
 const {put,del} = require('@vercel/blob')
 
 const updateProfilePic = async (req,res) => {
     try{
-        let profileData = await Profile.findOne()
+        let profileData = await Profile.findOne({
+            owner:req.user.userId
+        })
 
         if (!profileData) {
             profileData = await Profile.create({});
@@ -83,6 +84,7 @@ const updateResume = async (req,res) => {
             profileData._id,
             {resumeURL},
             {new:true}
+            
         )
         res.status(200).json(updated)
     } catch(error){

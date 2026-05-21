@@ -31,6 +31,7 @@ const createProject = async (req, res) => {
       githubURL,
       tags,
       demoURL,
+      owner:req.user.userId
     });
     res.status(201).json(newProject);
   } catch (error) {
@@ -45,7 +46,9 @@ const createProject = async (req, res) => {
 
 const getProjects = async (req, res) => {
   try {
-    const projects = await Project.find().sort({ createdAt: -1 });
+    const projects = await Project.find({
+      owner:req.user.userId
+    }).sort({ createdAt: -1 });
     res.status(200).json(projects);
   } catch (error) {
     res
@@ -60,7 +63,10 @@ const getProjects = async (req, res) => {
 const deleteProject = async (req, res) => {
   try {
     const { id } = req.params;
-    const project = await Project.findById(id);
+    const project = await Project.findById({
+      _id:id,
+      owner:req.user.userId
+    });
     if(project.imageURL){
       await del(project.imageURL, {
         token: process.env.BLOB_READ_WRITE_TOKEN,
@@ -114,6 +120,7 @@ const updateProject = async (req, res) => {
       id, 
       updateData, 
       {new:true},
+      owner:req.user.userId
     );
 
     res.status(200).json({ 
