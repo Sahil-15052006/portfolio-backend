@@ -7,7 +7,7 @@ const createMessage = async (req, res) => {
       name,
       email,
       message,
-      owner:req.user.userId
+      owner: req.user.userId.toString(),
     });
     res.status(201).json(newMessage);
   } catch (error) {
@@ -18,13 +18,17 @@ const createMessage = async (req, res) => {
 const getMessages = async (req, res) => {
   try {
     const messages = await Message.find({
-      owner:req.user.userId
+      owner: req.user.userId.toString(),
     }).sort({ createdAt: -1 });
+    if (messages.length === 0) {
+      return res.status(404).json({ message: "Message not found" });
+    }
     res.status(200).json(messages);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Server error : Failed to fetch messages" });
+    res.status(500).json({
+      message: "Server error : Failed to fetch messages",
+      error: error.message,
+    });
   }
 };
 
@@ -32,14 +36,15 @@ const deleteMessage = async (req, res) => {
   try {
     const { id } = req.params;
     await Message.findByIdAndDelete({
-      _id:id,
-      owner:req.user.userId
+      _id: id,
+      owner: req.user.userId.toString(),
     });
     res.status(200).json({ message: "Message Deleted" });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Server error : Failed to delete message" });
+    res.status(500).json({
+      message: "Server error : Failed to delete message",
+      error: error.message,
+    });
   }
 };
 

@@ -6,6 +6,7 @@ const bycrpt = require('bcryptjs');
 
 const loginUser = async (req, res) => {
     const { name, password } = req.body;
+    console.log("req recived")
     try{ 
         const stringifiedName = name.toString();
         const stringifiedPassword = password.toString();

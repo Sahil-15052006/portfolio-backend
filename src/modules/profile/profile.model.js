@@ -9,7 +9,7 @@ const ProfileSchema = mongoose.Schema(
             type:String,
         },
         owner:{
-        type:mongoose.Schema.Types.ObjectId,
+        type:String,
         ref:"User",
         required:true
         },

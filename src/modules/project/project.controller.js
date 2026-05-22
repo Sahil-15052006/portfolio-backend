@@ -31,15 +31,17 @@ const createProject = async (req, res) => {
       githubURL,
       tags,
       demoURL,
-      owner:req.user.userId
+      owner:req.user.userId.toString()
     });
     res.status(201).json(newProject);
   } catch (error) {
     res
       .status(500)
       .json(
-        { message: "Server error : Failed to upload Project" },
-        { error: error.message },
+        { 
+          message: "Server error : Failed to upload Project" ,
+          error: error.message 
+        },
       );
   }
 };
@@ -47,15 +49,21 @@ const createProject = async (req, res) => {
 const getProjects = async (req, res) => {
   try {
     const projects = await Project.find({
-      owner:req.user.userId
-    }).sort({ createdAt: -1 });
+      owner:req.user.userId.toString()
+    })
+    .sort({ createdAt: -1 });
+    if(projects.length === 0){
+      return res.status(404).json({message:"Project not found"})
+    }    
     res.status(200).json(projects);
   } catch (error) {
     res
       .status(500)
       .json(
-        { message: "Server error : Failed to fetch project" },
-        { error: error.message },
+        { 
+        message: "Server error : Failed to fetch project" ,
+        error: error.message 
+        },
       );
   }
 };
@@ -65,7 +73,7 @@ const deleteProject = async (req, res) => {
     const { id } = req.params;
     const project = await Project.findById({
       _id:id,
-      owner:req.user.userId
+      owner:req.user.userId.toString()
     });
     if(project.imageURL){
       await del(project.imageURL, {
@@ -78,14 +86,17 @@ const deleteProject = async (req, res) => {
     res
       .status(500)
       .json(
-        { message: "Server error : Failed to delete project" },
-        { error: error.message },
+        { 
+          message: "Server error : Failed to delete project" ,
+          error: error.message 
+        },
       );
   }
 };
 
 const updateProject = async (req, res) => {
   try {
+
     const { id } = req.params;
     const {title} = req.body
 
@@ -117,10 +128,12 @@ const updateProject = async (req, res) => {
       updateData.imageURL = blob.url;
     }
     const updatedProject = await Project.findByIdAndUpdate(
-      id, 
+      {
+        _id:id,
+        owner:req.user.userId.toString()
+      },
       updateData, 
       {new:true},
-      owner:req.user.userId
     );
 
     res.status(200).json({ 
@@ -131,8 +144,10 @@ const updateProject = async (req, res) => {
     res
       .status(500)
       .json(
-        { message: "Server error : Failed to updated Project" },
-        { error: error.message },
+        { 
+          message: "Server error : Failed to updated Project" ,
+          error: error.message 
+        },
       );
   }
 };

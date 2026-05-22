@@ -4,7 +4,7 @@ const {put,del} = require('@vercel/blob')
 const updateProfilePic = async (req,res) => {
     try{
         let profileData = await Profile.findOne({
-            owner:req.user.userId
+            owner:req.user.userId.toString()
         })
 
         if (!profileData) {
@@ -50,7 +50,9 @@ const updateProfilePic = async (req,res) => {
 
 const updateResume = async (req,res) => {
     try{
-        let profileData = await Profile.findOne()
+        let profileData = await Profile.findOne({
+            owner:req.user.userId.toString()
+        })
 
         if (!profileData) {
             profileData = await Profile.create({});
