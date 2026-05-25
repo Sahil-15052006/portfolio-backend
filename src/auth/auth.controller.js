@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 require("dotenv").config();
 const bycrpt = require('bcryptjs');
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const loginUser = async (req, res) => {
     const { name, password } = req.body;
     // console.log("req recived")
@@ -19,12 +21,13 @@ const loginUser = async (req, res) => {
                     process.env.JWT_SECRET,
                     { expiresIn: '1d' });
 
-                res.cookie('token', token, {
-                    httpOnly: true,
-                    secure: false,
-                    sameSite: 'lax',
-                    maxAge: 24 * 60 * 60 * 1000
+                res.cookie("token", token, {
+                  httpOnly: true,
+                  secure: isProduction,
+                  sameSite: isProduction ? "none" : "lax",
+                  maxAge: 24 * 60 * 60 * 1000
                 });
+
                 res.json({
                   success: true,
                  });
@@ -43,19 +46,20 @@ const loginUser = async (req, res) => {
 
 const logoutUser = (req, res) => {
   try {
-    res.clearCookie('token', {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     });
+
     res.json({
-      message: 'User logged out successfully'
-     });
+      message: "User logged out successfully",
+    });
   } catch (err) {
     res.status(500).json({
-       message: 'Server error',
-       error: err.message
-      });
+      message: "Server error",
+      error: err.message,
+    });
   }
 };
 
