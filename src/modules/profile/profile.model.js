@@ -2,6 +2,15 @@ const mongoose = require('mongoose')
 
 const ProfileSchema = mongoose.Schema(
     {
+        name:{
+            type:String
+        },
+        bio:{
+            type:String
+        },
+        title:{
+            type:String
+        },
         profilePicURL:{
             type:String,
         },
@@ -9,9 +18,9 @@ const ProfileSchema = mongoose.Schema(
             type:String,
         },
         owner:{
-        type:String,
-        ref:"User",
-        required:true
+            type:String,
+            ref:"User",
+            required:true
         },
     },
     {

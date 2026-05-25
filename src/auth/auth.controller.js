@@ -6,8 +6,8 @@ const bycrpt = require('bcryptjs');
 
 const loginUser = async (req, res) => {
     const { name, password } = req.body;
-    console.log("req recived")
-    try{ 
+    // console.log("req recived")
+    try{
         const stringifiedName = name.toString();
         const stringifiedPassword = password.toString();
         const user = await User.findOne({ name : stringifiedName });
@@ -15,10 +15,19 @@ const loginUser = async (req, res) => {
             const passwordMatched = await bycrpt.compare(stringifiedPassword, user.password);
             if(passwordMatched){
                 const token = jwt.sign(
-                    { userId: user._id }, 
-                    process.env.JWT_SECRET, 
-                    { expiresIn: '1h' });
-                res.json({ token });
+                    { userId: user._id },
+                    process.env.JWT_SECRET,
+                    { expiresIn: '1d' });
+
+                res.cookie('token', token, {
+                    httpOnly: true,
+                    secure: false,
+                    sameSite: 'lax',
+                    maxAge: 24 * 60 * 60 * 1000
+                });
+                res.json({
+                  success: true,
+                 });
             } else {
                 res.status(401).json({
                      message: 'Invalid credentials'
@@ -33,10 +42,30 @@ const loginUser = async (req, res) => {
 };
 
 const logoutUser = (req, res) => {
-    res.json({ message: 'User logged out successfully' });
+  try {
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+    });
+    res.json({
+      message: 'User logged out successfully'
+     });
+  } catch (err) {
+    res.status(500).json({
+       message: 'Server error',
+       error: err.message
+      });
+  }
 };
+
+const isAuthenticated = (req, res) => {
+  res.status(200).json({ authenticated: true });
+}
 
 module.exports = {
     loginUser,
-    logoutUser
+    logoutUser,
+    isAuthenticated
 };
+

@@ -5,10 +5,12 @@ const createSkill = async (req,res) => {
         const {name,type} = req.body
         const newSkill = await Skill.create({
             name,
-            type,
-            owner:req.user.userId.toString()    
+            type: type.toLowerCase(),
+            owner:req.user.userId.toString()
         })
-        res.status(201).json(newSkill)
+        res.status(201).json({
+          message:`[${newSkill.name}:${newSkill.type}] added successfully`,
+        })
     } catch(error){
         res.status(500).json({
             message : "Server error : Failed to create message",
@@ -42,7 +44,7 @@ const deleteSkill = async (req,res) => {
             _id:id,
             owner:req.user.userId.toString(),
         })
-        res.status(200).json({message:"Skill deleted"})
+        res.status(200).json({message:`[${deletedSkill.name}:${deletedSkill.type}] deleted successfully`})
     }catch(error){
         res.status(500).json({
             message: "Server error : Failed to delete message",
@@ -51,33 +53,9 @@ const deleteSkill = async (req,res) => {
     }
 }
 
-const updateSkill = async (req,res) => {
-    try{
-        const {id} = req.params
-        const updatedSkill = await Skill.findByIdAndUpdate(
-            {
-                _id:id,
-                owner:req.user.userId.toString()
-            },
-            req.body,
-            {new:true},
-        )
-        res
-        .status(200)
-        .json(updatedSkill,{
-            message:"Skill updated"
-        })
-    }catch(error){
-        res.status(500).json({
-            message: "Server error : Failed to update skill",
-            error: error.message
-        })
-    }
-}
 
 module.exports = {
     createSkill,
     getSkills,
     deleteSkill,
-    updateSkill,
 }

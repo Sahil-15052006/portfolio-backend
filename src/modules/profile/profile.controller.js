@@ -1,102 +1,180 @@
 const Profile = require('./profile.model')
-const {put,del} = require('@vercel/blob')
+const { put, del } = require('@vercel/blob')
 
-const updateProfilePic = async (req,res) => {
-    try{
-        let profileData = await Profile.findOne({
-            owner:req.user.userId.toString()
+const patchProfile = async (req, res) => {
+
+    try {
+
+        const updates = {}
+
+        const profileData = await Profile.findOne({
+            owner: req.user.userId
         })
 
-        if (!profileData) {
-            profileData = await Profile.create({});
+        // TEXT FIELDS
+
+        if (req.body.name !== undefined) {
+            updates.name = req.body.name.trim()
         }
 
-        let profilePicURL = profileData.profilePicURL
+        if (req.body.bio !== undefined) {
+            updates.bio = req.body.bio.trim()
+        }
 
-        if(req.file){
-            if(profileData.profilePicURL){
-                await del(profileData.profilePicURL,{
-                        token:process.env.BLOB_READ_WRITE_TOKEN
-                    });
-            }
+        if (req.body.title !== undefined) {
+            updates.title = req.body.title.trim()
+        }
 
-            const filename =  `profile-pic/profile-pic-${Date.now()}`
-            
-            const blob = await put(
-                filename,
-                req.file.buffer,
-                {
-                    access:"public",
-                    token:process.env.BLOB_READ_WRITE_TOKEN
+        // PROFILE PIC
+
+        const profilePicFile = req.files?.profilePic?.[0]
+
+        if (profilePicFile) {
+
+            const profilePicURL = await uploadProfilePic(profilePicFile)
+
+            updates.profilePicURL = profilePicURL
+        }
+
+        // RESUME
+
+        const resumeFile = req.files?.resume?.[0]
+
+        if (resumeFile) {
+
+            const resumeURL = await uploadResume(resumeFile)
+
+            updates.resumeURL = resumeURL
+        }
+
+        // EMPTY REQUEST CHECK
+
+        if (Object.keys(updates).length === 0) {
+
+            return res.status(400).json({
+                error: "No fields provided"
+            })
+
+        }
+
+        // UPDATE / CREATE PROFILE
+
+        const updatedProfile = await Profile.findOneAndUpdate(
+            {
+                owner: req.user.userId
+            },
+            {
+                $set: updates,
+                $setOnInsert: {
+                    owner: req.user.userId
                 }
-            )
-            
-            profilePicURL=blob.url
+            },
+            {
+                new: true,
+                upsert: true,
+                runValidators: true
+            }
+        )
+
+        // DELETE OLD PROFILE PIC
+
+        if (
+            profilePicFile &&
+            profileData?.profilePicURL
+        ) {
+            await del(profileData.profilePicURL, {
+                token: process.env.BLOB_READ_WRITE_TOKEN
+            })
+
         }
 
-        const updated = await Profile.findByIdAndUpdate(
-            profileData._id,
-            {profilePicURL},
-            {new:true}
-        )
-        res.status(200).json(updated)
-    } catch(error){
-        res.status(500).json(
-           
-            {error:error.message}
-        )
+        // DELETE OLD RESUME
+
+        if (
+            resumeFile &&
+            profileData?.resumeURL
+        ) {
+
+            await del(profileData.resumeURL, {
+                token: process.env.BLOB_READ_WRITE_TOKEN
+            })
+
+        }
+
+        res.status(200).json(updatedProfile)
+
+    } catch (error) {
+
+        res.status(500).json({
+            error: error.message
+        })
+
     }
 }
 
-const updateResume = async (req,res) => {
-    try{
-        let profileData = await Profile.findOne({
-            owner:req.user.userId.toString()
+const uploadProfilePic = async (file) => {
+
+    if (!file) return null
+
+    const filename = `profile-pic/profile-pic-${Date.now()}`
+
+    const blob = await put(
+        filename,
+        file.buffer,
+        {
+            access: "public",
+            token: process.env.BLOB_READ_WRITE_TOKEN
+        }
+    )
+
+    return blob.url
+}
+
+const uploadResume = async (file) => {
+
+    if (!file) return null
+
+    const filename = `resume/resume-${Date.now()}`
+
+    const blob = await put(
+        filename,
+        file.buffer,
+        {
+            access: "public",
+            token: process.env.BLOB_READ_WRITE_TOKEN,
+            contentType: "application/pdf"
+        }
+    )
+
+    return blob.url
+}
+
+const getProfile = async (req, res) => {
+
+    try {
+
+        const profile = await Profile.findOne({
+            owner: req.user.userId
         })
 
-        if (!profileData) {
-            profileData = await Profile.create({});
+        if (!profile) {
+            return res.status(404).json({
+                error: "Profile not found"
+            })
         }
 
-        let resumeURL = profileData.resumeURL
+        res.status(200).json(profile)
 
-        if(req.file){
-            if(profileData.resumeURL){
-                await del(profileData.resumeURL,{
-                        token:process.env.BLOB_READ_WRITE_TOKEN
-                    });
-            }
+    } catch (error) {
 
-            const filename =  `resume/resume-${Date.now()}`
-            
-            const blob = await put(
-                filename,
-                req.file.buffer,
-                {
-                    access:"public",
-                    token:process.env.BLOB_READ_WRITE_TOKEN,
-                    contentType:"application/pdf"
-                }
-            )
-            
-            resumeURL=blob.url
-        }
+        res.status(500).json({
+            error: error.message
+        })
 
-        const updated = await Profile.findByIdAndUpdate(
-            profileData._id,
-            {resumeURL},
-            {new:true}
-            
-        )
-        res.status(200).json(updated)
-    } catch(error){
-        res.status(500).json(
-            {error:error.message}
-        )
     }
 }
 
-module.exports={
-    updateProfilePic,
-    updateResume
+module.exports = {
+    patchProfile,
+    getProfile
 }
